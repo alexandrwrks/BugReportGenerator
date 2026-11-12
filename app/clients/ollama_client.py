@@ -47,7 +47,11 @@ class OllamaClient:
             report = BugReport.model_validate_json("".join(parts))
 
         except httpx.TimeoutException:
-            yield self.report_error("ollama_timeout", "Ollama не ответила вовремя")
+            yield self.report_error("ollama_timeout", "Ollama не ответила вовремя.")
+            return
+
+        except httpx.RequestError:
+            yield self.report_error("ollama_request_error", "Ошибка выдачи ответа.")
             return
 
         except (ResponseError, ConnectionError) as e:
@@ -55,7 +59,7 @@ class OllamaClient:
             return
 
         except ValidationError:
-            yield self.report_error("ollama_timeout", "Ответ модели не соответствует схеме BugReport")
+            yield self.report_error("invalid_report", "Ответ модели не соответствует схеме BugReport")
             return
 
         yield f"event: report\ndata: {report.model_dump_json()}\n\n"
